@@ -8,11 +8,11 @@ const Profile = () => {
 
   // Mock данные пользователя
   const userData = {
-    name: user?.name || "Алексей Иванов",
-    email: user?.email || "alex.ivanov@example.com",
+    name: user?.name || "Osmonov Meder",
+    email: user?.email || "meder.osmonov@example.com",
     bio: "Фронтенд разработчик с страстью к созданию красивых и функциональных интерфейсов. Люблю React, TypeScript и современный CSS.",
-    location: "Москва, Россия",
-    website: "https://alexivanov.dev",
+    location: "Bishkek, Kyrgyzstan",
+    website: "https://osmonov.dev",
     joinDate: "Январь 2023",
     posts: 24,
     likes: 156,
@@ -59,7 +59,7 @@ const Profile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 py-8 px-4 pt-28">
       <div className="max-w-6xl mx-auto">
         {/* Hero Section */}
         <div className="text-center mb-12 transform hover:scale-105 transition-transform duration-500">

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axios from 'axios'
+import { fetchPosts, fetchPostById } from "../../services/api";
 
 // Получение всех постов
 export const fetchPosts = createAsyncThunk(

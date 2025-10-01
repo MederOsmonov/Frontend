@@ -24,7 +24,7 @@ const CreatePost = () => {
   };
 
 return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 py-12 px-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 py-12 px-4 pt-28 relative">
       <div className="max-w-4xl mx-auto">
         {/* Анимированная карточка */}
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-purple-500/20 border-2 border-white/30 overflow-hidden transform hover:scale-[1.02] transition-all duration-500">

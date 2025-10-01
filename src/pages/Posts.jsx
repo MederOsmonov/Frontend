@@ -115,7 +115,7 @@ if (!post) {
   }
 
 return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-8 px-4 pt-28">
       <div className="max-w-4xl mx-auto">
         {/* Хлебные крошки */}
         <nav className="flex items-center space-x-2 text-sm font-medium text-gray-600 mb-6">
