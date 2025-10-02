@@ -1,32 +1,72 @@
-import React, { useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { loginUser, logout } from "./authSlice"
+import React, { useState, useContext } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, registerUser, logout, clearError } from "./authSlice";
+import { AuthContext } from "../../context/AuthContext";
 
-function AuthForm() {
-  const dispatch = useDispatch()
-  const { user, loading, error } = useSelector((state) => state.auth)
+function AuthForm({ isLogin = true }) {
+  const dispatch = useDispatch();
+  const { user, loading, error, isAuthenticated } = useSelector((state) => state.auth);
+  const { logout: contextLogout } = useContext(AuthContext);
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    first_name: "",
+    last_name: "",
+  });
 
-  const handleLogin = (e) => {
-    e.preventDefault()
-    dispatch(loginUser({ email, password }))
-  }
+  const [isLoginForm, setIsLoginForm] = useState(isLogin);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    dispatch(clearError());
+
+    try {
+      if (isLoginForm) {
+        await dispatch(loginUser({
+          username: formData.username,
+          password: formData.password,
+        })).unwrap();
+      } else {
+        await dispatch(registerUser(formData)).unwrap();
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+    }
+  };
 
   const handleLogout = () => {
-    dispatch(logout())
-  }
+    dispatch(logout());
+    contextLogout();
+  };
 
-  return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-10">
-      <h2 className="text-2xl font-bold text-center mb-4">
-        {user ? "Профиль" : "Войти"}
-      </h2>
+  const toggleForm = () => {
+    setIsLoginForm(!isLoginForm);
+    dispatch(clearError());
+    setFormData({
+      username: "",
+      email: "",
+      password: "",
+      first_name: "",
+      last_name: "",
+    });
+  };
 
-      {user ? (
+  if (isAuthenticated && user) {
+    return (
+      <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-10">
+        <h2 className="text-2xl font-bold text-center mb-4">Профиль</h2>
         <div className="text-center">
-          <p className="mb-4">Привет, {user.name} 👋</p>
+          <p className="mb-2">Привет, {user.first_name || user.username} 👋</p>
+          <p className="text-gray-600 mb-4">{user.email}</p>
           <button
             onClick={handleLogout}
             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
@@ -34,39 +74,96 @@ function AuthForm() {
             Выйти
           </button>
         </div>
-      ) : (
-        <form onSubmit={handleLogin} className="space-y-4">
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+      </div>
+    );
+  }
 
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
+  return (
+    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mt-10">
+      <h2 className="text-2xl font-bold text-center mb-4">
+        {isLoginForm ? "Вход" : "Регистрация"}
+      </h2>
 
-          <input
-            type="password"
-            placeholder="Пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            {loading ? "Загрузка..." : "Войти"}
-          </button>
-        </form>
-      )}
+        <input
+          type="text"
+          name="username"
+          placeholder="Имя пользователя"
+          value={formData.username}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+
+        {!isLoginForm && (
+          <>
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+
+            <input
+              type="text"
+              name="first_name"
+              placeholder="Имя"
+              value={formData.first_name}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <input
+              type="text"
+              name="last_name"
+              placeholder="Фамилия"
+              value={formData.last_name}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </>
+        )}
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Пароль"
+          value={formData.password}
+          onChange={handleChange}
+          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? "Загрузка..." : (isLoginForm ? "Войти" : "Зарегистрироваться")}
+        </button>
+      </form>
+
+      <div className="mt-4 text-center">
+        <button
+          onClick={toggleForm}
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          {isLoginForm 
+            ? "Нет аккаунта? Зарегистрироваться" 
+            : "Уже есть аккаунт? Войти"}
+        </button>
+      </div>
     </div>
-  )
+  );
 }
 
-export default AuthForm
+export default AuthForm;

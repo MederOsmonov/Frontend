@@ -1,26 +1,53 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addPost } from "../features/posts/postSlice";
+import { useNotification } from "../context/NotificationContext";
 
 const CreatePost = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { success: showSuccess, error: showError } = useNotification();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!title.trim() || !content.trim()) {
+      showError('Пожалуйста, заполните все поля');
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Имитация загрузки
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Здесь должен быть вызов API для создания поста
-    setSuccess(true);
-    setTitle("");
-    setContent("");
-    setIsSubmitting(false);
-    
-    // Автоматическое скрытие успешного сообщения
-    setTimeout(() => setSuccess(false), 3000);
+    try {
+      const postData = {
+        title: title.trim(),
+        content: content.trim(),
+        status: 'published'
+      };
+
+      await dispatch(addPost(postData)).unwrap();
+      
+      setSuccess(true);
+      showSuccess('Пост успешно создан!');
+      setTitle("");
+      setContent("");
+      
+      // Перенаправляем на страницу постов через 2 секунды
+      setTimeout(() => {
+        navigate('/posts');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Ошибка создания поста:', error);
+      showError(error.message || 'Ошибка создания поста');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
 return (
