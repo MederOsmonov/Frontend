@@ -31,7 +31,7 @@ const Header = () => {
             <div className="relative">
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl transform rotate-45 transition-all duration-500 group-hover:rotate-90 shadow-2xl"></div>
               <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-xl">
-                📖
+                 🌟
               </span>
             </div>
             <span className={`text-2xl font-bold transition-all duration-300 ${

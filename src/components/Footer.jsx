@@ -199,17 +199,18 @@ const Footer = () => (
         </div>
       </div>
 
-      {/* Копирайт и дополнительная информация */}
-      <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-        <div className="text-center md:text-left">
-          <p className="text-gray-300 font-medium">
-            &copy; {new Date().getFullYear()} MyBlog. Все права защищены.
-          </p>
-          <p className="text-gray-400 text-sm mt-1">
-            Сделано с <span className="text-red-500 animate-pulse">❤️</span> для творческих людей
-          </p>
-        </div>
-        
+      {/* Копирайт */}
+<div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
+  <div className="text-center md:text-left">
+    <p className="text-gray-300 font-light tracking-wide">
+      &copy; {new Date().getFullYear()} MyBlog
+    </p>
+    <p className="text-gray-500 text-xs mt-1 flex items-center justify-center md:justify-start space-x-1">
+      <span>Created with</span>
+      <span className="text-rose-500 animate-pulse">❤️</span>
+      <span>for creators</span>
+    </p>
+  </div>
         <div className="flex items-center space-x-6 text-sm text-gray-400">
           <a href="#" className="hover:text-white transition-colors duration-300 font-medium">
             Политика конфиденциальности

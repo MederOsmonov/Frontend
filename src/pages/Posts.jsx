@@ -10,6 +10,8 @@ const Posts = () => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
 
   useEffect(() => {
     const loadPost = async () => {
@@ -27,7 +29,19 @@ const Posts = () => {
           avatar: "МП",
           content: "Отличная статья! Очень познавательно и хорошо структурировано. Спасибо за полезную информацию!",
           time: "2 часа назад",
-          likes: 12
+          likes: 12,
+          isLiked: false,
+          replies: [
+            {
+              id: 11,
+              author: "Автор",
+              avatar: "А",
+              content: "Спасибо за отзыв! Рад, что статья оказалась полезной.",
+              time: "1 час назад",
+              likes: 3,
+              isLiked: false
+            }
+          ]
         },
         {
           id: 2,
@@ -35,7 +49,9 @@ const Posts = () => {
           avatar: "ИС",
           content: "Интересный взгляд на проблему. А есть ли у вас дополнительные материалы по этой теме?",
           time: "5 часов назад",
-          likes: 8
+          likes: 8,
+          isLiked: false,
+          replies: []
         }
       ]);
       
@@ -52,6 +68,34 @@ const Posts = () => {
     setIsBookmarked(!isBookmarked);
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: post?.title || 'Интересный пост',
+        text: post?.excerpt || 'Посмотрите этот пост в MyBlog',
+        url: window.location.href
+      }).catch(console.error);
+    } else {
+      // Fallback - копируем URL в буфер обмена
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('Ссылка скопирована в буфер обмена!');
+      }).catch(() => {
+        alert('Не удалось скопировать ссылку');
+      });
+    }
+  };
+
+  const handleCommentClick = () => {
+    const commentSection = document.querySelector('#comments-section');
+    if (commentSection) {
+      commentSection.scrollIntoView({ behavior: 'smooth' });
+      const textarea = commentSection.querySelector('textarea');
+      if (textarea) {
+        textarea.focus();
+      }
+    }
+  };
+
   const handleCommentSubmit = (e) => {
     e.preventDefault();
     if (comment.trim()) {
@@ -61,10 +105,73 @@ const Posts = () => {
         avatar: "В",
         content: comment,
         time: "Только что",
-        likes: 0
+        likes: 0,
+        isLiked: false,
+        replies: []
       };
       setComments([newComment, ...comments]);
       setComment("");
+    }
+  };
+
+  const handleCommentLike = (commentId) => {
+    setComments(comments.map(comment => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
+          isLiked: !comment.isLiked
+        };
+      }
+      return comment;
+    }));
+  };
+
+  const handleReplyLike = (commentId, replyId) => {
+    setComments(comments.map(comment => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          replies: comment.replies.map(reply => {
+            if (reply.id === replyId) {
+              return {
+                ...reply,
+                likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1,
+                isLiked: !reply.isLiked
+              };
+            }
+            return reply;
+          })
+        };
+      }
+      return comment;
+    }));
+  };
+
+  const handleReplySubmit = (commentId) => {
+    if (replyText.trim()) {
+      const newReply = {
+        id: Date.now(),
+        author: "Вы",
+        avatar: "В",
+        content: replyText,
+        time: "Только что",
+        likes: 0,
+        isLiked: false
+      };
+      
+      setComments(comments.map(comment => {
+        if (comment.id === commentId) {
+          return {
+            ...comment,
+            replies: [...comment.replies, newReply]
+          };
+        }
+        return comment;
+      }));
+      
+      setReplyText("");
+      setReplyingTo(null);
     }
   };
 
@@ -201,29 +308,57 @@ return (
         <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/30 p-6 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                <span>❤️</span>
-                <span>Нравится</span>
+              <button 
+                onClick={handleLike}
+                className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ${
+                  isLiked 
+                    ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white' 
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700'
+                }`}
+              >
+                <span>{isLiked ? '❤️' : '🤍'}</span>
+                <span>{isLiked ? 'Нравится!' : 'Нравится'}</span>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-xs">
+                  {isLiked ? '1' : '0'}
+                </span>
               </button>
-              <button className="flex items-center space-x-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-2xl font-semibold hover:bg-gray-200 transition-all duration-300">
+              <button 
+                onClick={handleCommentClick}
+                className="flex items-center space-x-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-2xl font-semibold hover:bg-purple-50 hover:text-purple-600 transition-all duration-300 transform hover:scale-105"
+              >
                 <span>💬</span>
                 <span>Комментировать</span>
+                <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">
+                  {comments.length}
+                </span>
               </button>
             </div>
             
             <div className="flex items-center space-x-3">
-              <button className="p-3 bg-gray-100 text-gray-700 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-300">
-                📤 Поделиться
+              <button 
+                onClick={handleShare}
+                className="flex items-center space-x-2 p-3 bg-gray-100 text-gray-700 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 transform hover:scale-105 font-semibold"
+              >
+                <span>📤</span>
+                <span>Поделиться</span>
               </button>
-              <button className="p-3 bg-gray-100 text-gray-700 rounded-2xl hover:bg-yellow-50 hover:text-yellow-600 transition-all duration-300">
-                ⭐️ Сохранить
+              <button 
+                onClick={handleBookmark}
+                className={`flex items-center space-x-2 p-3 rounded-2xl transition-all duration-300 transform hover:scale-105 font-semibold ${
+                  isBookmarked
+                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600'
+                }`}
+              >
+                <span>{isBookmarked ? '⭐️' : '☆'}</span>
+                <span>{isBookmarked ? 'Сохранено' : 'Сохранить'}</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Комментарии */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/30 p-8">
+        <div id="comments-section" className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/30 p-8">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
             <span className="mr-3">💬</span>
             Комментарии ({comments.length})
@@ -262,30 +397,125 @@ return (
           {/* Список комментариев */}
           <div className="space-y-6">
             {comments.map((commentItem) => (
-              <div key={commentItem.id} className="flex items-start space-x-4 p-6 bg-gray-50/80 rounded-2xl border-2 border-gray-200/50">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  {commentItem.avatar}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-gray-800 text-lg">{commentItem.author}</h4>
-                    <span className="text-gray-500 text-sm font-medium">{commentItem.time}</span>
+              <div key={commentItem.id} className="space-y-4">
+                {/* Основной комментарий */}
+                <div className="flex items-start space-x-4 p-6 bg-gray-50/80 rounded-2xl border-2 border-gray-200/50 hover:bg-gray-100/80 transition-all duration-300">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-lg">
+                    {commentItem.avatar}
                   </div>
-                  <p className="text-gray-700 font-medium leading-relaxed mb-3">
-                    {commentItem.content}
-                  </p>
-                  <div className="flex items-center space-x-4">
-                    <button className="flex items-center space-x-1 text-gray-600 hover:text-red-600 transition-colors font-medium">
-                      <span>❤️</span>
-                      <span>{commentItem.likes}</span>
-                    </button>
-                    <button className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                      Ответить
-                    </button>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-gray-800 text-lg">{commentItem.author}</h4>
+                      <span className="text-gray-500 text-sm font-medium">{commentItem.time}</span>
+                    </div>
+                    <p className="text-gray-700 font-medium leading-relaxed mb-3">
+                      {commentItem.content}
+                    </p>
+                    <div className="flex items-center space-x-4">
+                      <button 
+                        onClick={() => handleCommentLike(commentItem.id)}
+                        className={`flex items-center space-x-1 transition-all duration-300 font-medium px-3 py-1 rounded-full ${
+                          commentItem.isLiked 
+                            ? 'text-red-600 bg-red-50 hover:bg-red-100' 
+                            : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
+                        }`}
+                      >
+                        <span>{commentItem.isLiked ? '❤️' : '🤍'}</span>
+                        <span>{commentItem.likes}</span>
+                      </button>
+                      <button 
+                        onClick={() => setReplyingTo(replyingTo === commentItem.id ? null : commentItem.id)}
+                        className="text-gray-600 hover:text-blue-600 transition-colors font-medium px-3 py-1 rounded-full hover:bg-blue-50"
+                      >
+                        💬 Ответить
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Форма ответа */}
+                {replyingTo === commentItem.id && (
+                  <div className="ml-16 p-4 bg-blue-50/50 rounded-2xl border-2 border-blue-200/50">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                        В
+                      </div>
+                      <div className="flex-1">
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder={`Ответить ${commentItem.author}...`}
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-none font-medium"
+                          rows="3"
+                        />
+                        <div className="flex justify-end space-x-2 mt-3">
+                          <button
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyText("");
+                            }}
+                            className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium rounded-xl hover:bg-gray-100 transition-all duration-300"
+                          >
+                            Отмена
+                          </button>
+                          <button
+                            onClick={() => handleReplySubmit(commentItem.id)}
+                            disabled={!replyText.trim()}
+                            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none disabled:hover:shadow-lg"
+                          >
+                            Ответить
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ответы на комментарий */}
+                {commentItem.replies && commentItem.replies.length > 0 && (
+                  <div className="ml-16 space-y-3">
+                    {commentItem.replies.map((reply) => (
+                      <div key={reply.id} className="flex items-start space-x-3 p-4 bg-white/80 rounded-xl border-2 border-gray-100 hover:bg-gray-50/80 transition-all duration-300">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md">
+                          {reply.avatar}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-bold text-gray-800">{reply.author}</h5>
+                            <span className="text-gray-500 text-xs font-medium">{reply.time}</span>
+                          </div>
+                          <p className="text-gray-700 font-medium leading-relaxed mb-2">
+                            {reply.content}
+                          </p>
+                          <button 
+                            onClick={() => handleReplyLike(commentItem.id, reply.id)}
+                            className={`flex items-center space-x-1 transition-all duration-300 font-medium px-2 py-1 rounded-full text-sm ${
+                              reply.isLiked 
+                                ? 'text-red-600 bg-red-50 hover:bg-red-100' 
+                                : 'text-gray-600 hover:text-red-600 hover:bg-red-50'
+                            }`}
+                          >
+                            <span>{reply.isLiked ? '❤️' : '🤍'}</span>
+                            <span>{reply.likes}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
+            
+            {comments.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-4xl">💬</span>
+                </div>
+                <p className="text-gray-600 text-lg font-medium">
+                  Пока нет комментариев. Станьте первым!
+                </p>
+              </div>
+            )}
           </div>
         </div>
         {/* Floating Elements */}
